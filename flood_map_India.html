@@ -67,10 +67,15 @@
         // Hospital Layer (All)
         const hospitalLayer = L.layerGroup();
         const baseHospitalIcon = L.divIcon({
-            html: `<div style="background:#007bff; width:8px; height:8px; border-radius:50%; border:1px solid white;"></div>`,
-            className: 'hospital-dot',
-            iconSize: [8, 8],
-            iconAnchor: [4, 4]
+            html: `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="11" fill="#007bff" stroke="white" stroke-width="1.5"/>
+                    <path d="M12 7V17M7 12H17" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                </svg>`,
+            className: 'hospital-marker-small',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+            popupAnchor: [0, -7]
         });
 
         hospitalDataUP.forEach(h => {
