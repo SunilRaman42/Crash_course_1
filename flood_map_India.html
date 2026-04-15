@@ -27,19 +27,22 @@
     </div>
     <div id="map"></div>
     <script src="Day 2 Flood mapping/india_points.js"></script>
+    <script src="hospital_data_UP.js"></script>
     <script>
-        const map = L.map('map').setView([22.5, 82.0], 5); // Centered on India
+        const map = L.map('map').setView([26.8467, 80.9462], 6); // Centered on Uttar Pradesh
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap, © CARTO'
         }).addTo(map);
 
+        // Flood Layer
+        const floodLayer = L.layerGroup();
         indiaData.forEach(p => {
             const sev = p.severity;
             let fillColor;
-            if (sev === 1 || String(sev) === '1.0') fillColor = '#7fbfff'; // light blue
-            else if (sev === 1.5 || String(sev) === '1.5') fillColor = '#ff8c00'; // orange
-            else if (sev === 2 || String(sev) === '2.0') fillColor = '#ff0000'; // red
+            if (sev === 1 || String(sev) === '1.0') fillColor = '#7fbfff';
+            else if (sev === 1.5 || String(sev) === '1.5') fillColor = '#ff8c00';
+            else if (sev === 2 || String(sev) === '2.0') fillColor = '#ff0000';
             else fillColor = '#007bff';
 
             L.circleMarker([p.lat, p.lng], {
@@ -51,15 +54,42 @@
                 fillOpacity: 0.8
             }).bindPopup(`
                 <div style="font-family: sans-serif;">
+                    <b style="color:#d32f2f">Flood Event</b><br>
                     <b>Date:</b> ${p.began || p.date || 'N/A'}<br>
                     <b>Cause:</b> ${p.cause || 'N/A'}<br>
-                    <b>Severity:</b> ${(p.severity !== undefined && p.severity !== null) ? p.severity : 'N/A'}<br>
-                    ${(p.severity === 2 || String(p.severity) === '2.0') ? ('<b>Place:</b> ' + (p.Place || 'N/A') + '<br>') : ''}
-                    <b>Deaths:</b> ${p.dead != null ? p.dead : 'N/A'}<br>
-                    <b>Displaced:</b> ${p.displaced != null ? p.displaced : 'N/A'}
+                    <b>Severity:</b> ${p.severity || 'N/A'}
                 </div>
-            `).addTo(map);
+            `).addTo(floodLayer);
         });
+        floodLayer.addTo(map);
+
+        // Hospital Layer
+        const hospitalLayer = L.layerGroup();
+        hospitalDataUP.forEach(h => {
+            L.marker([h.lat, h.lng], {
+                icon: L.divIcon({
+                    html: '<div style="background-color: white; border: 2px solid #d32f2f; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #d32f2f; font-weight: bold; box-shadow: 0 0 4px rgba(0,0,0,0.4);">H</div>',
+                    className: 'hospital-marker',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).bindPopup(`
+                <div style="font-family: sans-serif;">
+                    <b style="color:#007bff">Hospital</b><br>
+                    <b>Name:</b> ${h.name}<br>
+                    <b>City:</b> ${h.city}<br>
+                    <b>Type:</b> ${h.type}
+                </div>
+            `).addTo(hospitalLayer);
+        });
+        hospitalLayer.addTo(map);
+
+        // Layer Control
+        const overlays = {
+            "Flood Events": floodLayer,
+            "Hospitals (UP)": hospitalLayer
+        };
+        L.control.layers(null, overlays, {collapsed: false}).addTo(map);
 
         // Legend
         const legend = L.control({position: 'bottomleft'});
