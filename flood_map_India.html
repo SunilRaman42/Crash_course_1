@@ -28,8 +28,9 @@
     <div id="map"></div>
     <script src="Day 2 Flood mapping/india_points.js"></script>
     <script src="hospital_data_UP.js"></script>
+    <script src="hospitals_at_risk_UP.js"></script>
     <script>
-        const map = L.map('map').setView([26.8467, 80.9462], 6); // Centered on Uttar Pradesh
+        const map = L.map('map').setView([26.8467, 82.0], 7); // Focused on Eastern UP where at-risk clusters are
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap, © CARTO'
@@ -63,37 +64,70 @@
         });
         floodLayer.addTo(map);
 
-        // Hospital Layer
+        // Hospital Layer (All)
         const hospitalLayer = L.layerGroup();
-        const hospitalIcon = L.divIcon({
-            html: `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
-                    <circle cx="12" cy="12" r="11" fill="#007bff" stroke="white" stroke-width="1.5"/>
-                    <path d="M12 7V17M7 12H17" stroke="white" stroke-width="3" stroke-linecap="round"/>
-                </svg>`,
-            className: 'hospital-marker',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-            popupAnchor: [0, -12]
+        const baseHospitalIcon = L.divIcon({
+            html: `<div style="background:#007bff; width:8px; height:8px; border-radius:50%; border:1px solid white;"></div>`,
+            className: 'hospital-dot',
+            iconSize: [8, 8],
+            iconAnchor: [4, 4]
         });
 
         hospitalDataUP.forEach(h => {
-            L.marker([h.lat, h.lng], { icon: hospitalIcon })
-            .bindPopup(`
-                <div style="font-family: sans-serif;">
-                    <b style="color:#007bff">Hospital</b><br>
-                    <b>Name:</b> ${h.name}<br>
-                    <b>City:</b> ${h.city}<br>
-                    <b>Type:</b> ${h.type}
-                </div>
-            `).addTo(hospitalLayer);
+            L.marker([h.lat, h.lng], { icon: baseHospitalIcon })
+            .bindPopup(`<b>${h.name}</b><br>${h.city}`)
+            .addTo(hospitalLayer);
         });
         hospitalLayer.addTo(map);
+
+        // At-Risk Layers
+        const risk5kmLayer = L.layerGroup();
+        const risk10kmLayer = L.layerGroup();
+
+        const createPlusIcon = (color) => L.divIcon({
+            html: `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="11" fill="${color}" stroke="white" stroke-width="1.5"/>
+                    <path d="M12 7V17M7 12H17" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                </svg>`,
+            className: 'risk-marker',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        hospitalsAtRiskUP.radius_5km.forEach(h => {
+            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff0000') })
+            .bindPopup(`
+                <div style="font-family: sans-serif;">
+                    <b style="color:#ff0000">⚠️ HIGH RISK HOSPITAL (5km)</b><br>
+                    <b>Name:</b> ${h.name}<br>
+                    <b>Distance:</b> ${h.distance_km} km to nearest flood<br>
+                    <b>Flood Cause:</b> ${h.flood_cause}
+                </div>
+            `).addTo(risk5kmLayer);
+        });
+
+        hospitalsAtRiskUP.radius_10km.forEach(h => {
+            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff8c00') })
+            .bindPopup(`
+                <div style="font-family: sans-serif;">
+                    <b style="color:#ff8c00">⚠️ AT RISK HOSPITAL (10km)</b><br>
+                    <b>Name:</b> ${h.name}<br>
+                    <b>Distance:</b> ${h.distance_km} km to nearest flood<br>
+                    <b>Flood Cause:</b> ${h.flood_cause}
+                </div>
+            `).addTo(risk10kmLayer);
+        });
+
+        risk5kmLayer.addTo(map);
+        risk10kmLayer.addTo(map);
 
         // Layer Control
         const overlays = {
             "Flood Events": floodLayer,
-            "Hospitals (UP)": hospitalLayer
+            "All Hospitals": hospitalLayer,
+            "<span style='color:red'>Hospitals within 5km</span>": risk5kmLayer,
+            "<span style='color:orange'>Hospitals within 10km</span>": risk10kmLayer
         };
         L.control.layers(null, overlays, {collapsed: false}).addTo(map);
 
@@ -102,13 +136,20 @@
         legend.onAdd = function (map) {
             const div = L.DomUtil.create('div', 'info legend');
             div.style.background = 'white';
-            div.style.padding = '6px 8px';
+            div.style.padding = '10px';
             div.style.borderRadius = '5px';
             div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
-            div.innerHTML = '<b>Severity</b><br>' +
-                '<i style="background:#7fbfff;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.0<br>' +
-                '<i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.5<br>' +
-                '<i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 2.0';
+            div.style.fontSize = '0.9em';
+            div.innerHTML = `
+                <div style="margin-bottom:8px"><b>Flood Severity</b><br>
+                <i style="background:#7fbfff;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.0<br>
+                <i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.5<br>
+                <i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 2.0</div>
+                
+                <div><b>Hospital Proximity</b><br>
+                <i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1.5px solid white;border-radius:50%"></i> 5km Radius (High Risk)<br>
+                <i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1.5px solid white;border-radius:50%"></i> 10km Radius (At Risk)</div>
+            `;
             return div;
         };
         legend.addTo(map);
