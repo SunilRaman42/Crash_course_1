@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Historical Flood Map (Blue Theme)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { height: 100%; margin: 0; background: #f0f4f8; }
+        #map { height: 100%; width: 100%; }
+        .panel {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 64, 128, 0.15); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            width: 260px; border: 1px solid #b3cde3;
+        }
+        h3 { margin: 0 0 12px 0; color: #004085; font-size: 1.3em; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        label { color: #495057; font-weight: bold; font-size: 0.9em; }
+        select { 
+            width: 100%; padding: 10px; margin-top: 8px; cursor: pointer; 
+            border: 1px solid #007bff; border-radius: 5px; background: #f8fbff;
+            color: #004085; font-weight: 500;
+        }
+        .legend {
+            background: #fdfdfd; padding: 12px; border-radius: 6px;
+            line-height: 1.5em; font-size: 0.85em; margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .legend-scale {
+            display: flex; height: 12px; width: 100%; margin: 8px 0;
+            background: linear-gradient(to right, #d1e9ff, #007bff, #002752);
+            border: 1px solid #004085; border-radius: 2px;
+        }
+        .na-marker {
+            background: #ced4da; width: 10px; height: 10px; 
+            display: inline-block; border-radius: 50%; border: 1px solid #6c757d;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h3>Flood Data Explorer</h3>
+        <label>Metric to Visualize:</label>
+        <select id="metric" onchange="draw()">
+            <option value="cases">Total Flood Events</option>
+            <option value="dead">Total Reported Deaths</option>
+            <option value="displaced">Total People Displaced</option>
+        </select>
+        <div class="legend">
+            <strong style="color: #004085;">Intensity Scale</strong>
+            <div class="legend-scale"></div>
+            <div style="display: flex; justify-content: space-between; font-weight: 600; color: #0056b3;">
+                <span>Low</span>
+                <span>High</span>
+            </div>
+            <p style="margin: 10px 0 0 0; color: #6c757d; font-size: 0.85em;">
+                <span class="na-marker"></span> <b>Gray</b> = Data Not Available
+            </p>
+        </div>
+    </div>
+    <div id="map"></div>
+    <script src="Day 2 Flood mapping/map_data.js"></script>
+    <script>
+        const map = L.map('map').setView([15, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap, © CARTO'
+        }).addTo(map);
+
+        let layerGroup = L.layerGroup().addTo(map);
+
+        // Professional Blue Palette (Light Blue -> Bright Blue -> Navy)
+        function getBlueScale(fraction) {
+            const colors = [
+                [209, 233, 255], // Very Light Blue
+                [0, 123, 255],   // Primary Blue
+                [0, 39, 82]      // Navy Blue
+            ];
+            
+            const idx = Math.min(Math.floor(fraction * (colors.length - 1)), colors.length - 2);
+            const low = colors[idx];
+            const high = colors[idx + 1];
+            const segFraction = (fraction * (colors.length - 1)) - idx;
+            
+            const r = Math.round(low[0] + (high[0] - low[0]) * segFraction);
+            const g = Math.round(low[1] + (high[1] - low[1]) * segFraction);
+            const b = Math.round(low[2] + (high[2] - low[2]) * segFraction);
+            
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function getColor(val, metric) {
+            if (val === null || val === undefined) return "#ced4da"; 
+            if (val === 0) return "#d1e9ff";
+            
+            const max = floodMaxes[metric];
+            const fraction = Math.log10(val + 1) / Math.log10(max + 1);
+            return getBlueScale(Math.min(fraction, 1));
+        }
+
+        function draw() {
+            const m = document.getElementById('metric').value;
+            layerGroup.clearLayers();
+            
+            floodData.forEach(c => {
+                const val = c[m];
+                const color = getColor(val, m);
+                const displayVal = (val === null) ? "N/A" : val.toLocaleString();
+                
+                L.circleMarker([c.lat, c.lng], {
+                    radius: 7,
+                    fillColor: color,
+                    color: "#004085",
+                    weight: 0.8,
+                    opacity: 0.9,
+                    fillOpacity: 0.7
+                }).bindPopup(`
+                    <div style="font-family: sans-serif; min-width: 150px;">
+                        <h4 style="margin: 0 0 5px 0; color: #004085; border-bottom: 1px solid #eee;">${c.name}</h4>
+                        <span style="color: #666; font-size: 0.9em;">${document.getElementById('metric').options[document.getElementById('metric').selectedIndex].text}:</span><br>
+                        <b style="color: #007bff; font-size: 1.1em;">${displayVal}</b>
+                    </div>
+                `).addTo(layerGroup);
+            });
+        }
+        draw();
+    </script>
+</body>
+</html>

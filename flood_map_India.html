@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Floods in India</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { height: 100%; margin: 0; background: #f0f4f8; }
+        #map { height: 100%; width: 100%; }
+        .panel {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 64, 128, 0.2); font-family: sans-serif; 
+            width: 250px; border-left: 5px solid #007bff;
+        }
+        h2 { margin: 0 0 5px 0; color: #004085; font-size: 1.2em; }
+        p { margin: 5px 0; font-size: 0.9em; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>India Flood History</h2>
+        <p>Showing all historical flood events recorded for India in the DFO archive.</p>
+        <p><strong>Markers:</strong> Individual flood points.</p>
+    </div>
+    <div id="map"></div>
+    <script src="Day 2 Flood mapping/india_points.js"></script>
+    <script>
+        const map = L.map('map').setView([22.5, 82.0], 5); // Centered on India
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap, © CARTO'
+        }).addTo(map);
+
+        indiaData.forEach(p => {
+            const sev = p.severity;
+            let fillColor;
+            if (sev === 1 || String(sev) === '1.0') fillColor = '#7fbfff'; // light blue
+            else if (sev === 1.5 || String(sev) === '1.5') fillColor = '#ff8c00'; // orange
+            else if (sev === 2 || String(sev) === '2.0') fillColor = '#ff0000'; // red
+            else fillColor = '#007bff';
+
+            L.circleMarker([p.lat, p.lng], {
+                radius: 5,
+                fillColor: fillColor,
+                color: "#004085",
+                weight: 1,
+                opacity: 0.8,
+                fillOpacity: 0.8
+            }).bindPopup(`
+                <div style="font-family: sans-serif;">
+                    <b>Date:</b> ${p.began || p.date || 'N/A'}<br>
+                    <b>Cause:</b> ${p.cause || 'N/A'}<br>
+                    <b>Severity:</b> ${(p.severity !== undefined && p.severity !== null) ? p.severity : 'N/A'}<br>
+                    ${(p.severity === 2 || String(p.severity) === '2.0') ? ('<b>Place:</b> ' + (p.Place || 'N/A') + '<br>') : ''}
+                    <b>Deaths:</b> ${p.dead != null ? p.dead : 'N/A'}<br>
+                    <b>Displaced:</b> ${p.displaced != null ? p.displaced : 'N/A'}
+                </div>
+            `).addTo(map);
+        });
+
+        // Legend
+        const legend = L.control({position: 'bottomleft'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.style.background = 'white';
+            div.style.padding = '6px 8px';
+            div.style.borderRadius = '5px';
+            div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+            div.innerHTML = '<b>Severity</b><br>' +
+                '<i style="background:#7fbfff;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.0<br>' +
+                '<i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.5<br>' +
+                '<i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 2.0';
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
