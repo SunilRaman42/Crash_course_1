@@ -127,37 +127,65 @@
         risk5kmLayer.addTo(map);
         risk10kmLayer.addTo(map);
 
-        // Layer Control
-        const overlays = {
-            "Flood Events": floodLayer,
-            "All Hospitals": hospitalLayer,
-            "<span style='color:red'>Hospitals within 5km</span>": risk5kmLayer,
-            "<span style='color:orange'>Hospitals within 10km</span>": risk10kmLayer
-        };
-        L.control.layers(null, overlays, {collapsed: false}).addTo(map);
-
-        // Legend
-        const legend = L.control({position: 'bottomleft'});
-        legend.onAdd = function (map) {
-            const div = L.DomUtil.create('div', 'info legend');
+        // Combined Layer Control + Legend
+        const combinedControl = L.control({position: 'bottomleft'});
+        combinedControl.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'combined-control');
             div.style.background = 'white';
-            div.style.padding = '10px';
-            div.style.borderRadius = '5px';
-            div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+            div.style.padding = '12px';
+            div.style.borderRadius = '8px';
+            div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            div.style.fontFamily = 'sans-serif';
             div.style.fontSize = '0.9em';
+            div.style.width = '240px';
+            div.style.borderLeft = '6px solid #007bff';
+
             div.innerHTML = `
-                <div style="margin-bottom:8px"><b>Flood Severity</b><br>
-                <i style="background:#7fbfff;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.0<br>
-                <i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 1.5<br>
-                <i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1px solid #004085"></i> 2.0</div>
+                <div style="font-weight:bold; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px; color:#004085">Map Controls & Legend</div>
                 
-                <div><b>Hospital Proximity</b><br>
-                <i style="background:#ff0000;width:12px;height:12px;display:inline-block;margin-right:6px;border:1.5px solid white;border-radius:50%"></i> 5km Radius (High Risk)<br>
-                <i style="background:#ff8c00;width:12px;height:12px;display:inline-block;margin-right:6px;border:1.5px solid white;border-radius:50%"></i> 10km Radius (At Risk)</div>
+                <div style="margin-bottom:12px">
+                    <div style="font-weight:600; margin-bottom:5px; font-size:0.85em; color:#666">FLOOD EVENTS</div>
+                    <label style="display:block; margin-bottom:3px; cursor:pointer"><input type="checkbox" checked onchange="toggleLayer('flood', this)"> <i style="background:#7fbfff;width:10px;height:10px;display:inline-block;margin:0 4px;border:1px solid #004085"></i> Severity 1.0</label>
+                    <label style="display:block; margin-bottom:3px; cursor:pointer"><input type="checkbox" checked onchange="toggleLayer('flood', this)"> <i style="background:#ff8c00;width:10px;height:10px;display:inline-block;margin:0 4px;border:1px solid #004085"></i> Severity 1.5</label>
+                    <label style="display:block; margin-bottom:5px; cursor:pointer"><input type="checkbox" checked onchange="toggleLayer('flood', this)"> <i style="background:#ff0000;width:10px;height:10px;display:inline-block;margin:0 4px;border:1px solid #004085"></i> Severity 2.0</label>
+                    <small style="color:#888; display:block; margin-left:20px; font-style:italic">Toggles all flood points</small>
+                </div>
+
+                <div>
+                    <div style="font-weight:600; margin-bottom:5px; font-size:0.85em; color:#666">HOSPITALS</div>
+                    <label style="display:block; margin-bottom:5px; cursor:pointer"><input type="checkbox" checked onchange="toggleLayer('all-hosp', this)"> 
+                        <svg width="12" height="12" style="vertical-align:middle; margin:0 2px"><circle cx="6" cy="6" r="5" fill="#007bff" stroke="white" stroke-width="1"/></svg> All Hospitals
+                    </label>
+                    <label style="display:block; margin-bottom:5px; cursor:pointer; color:#d32f2f; font-weight:600"><input type="checkbox" checked onchange="toggleLayer('risk-5', this)"> 
+                        <svg width="14" height="14" style="vertical-align:middle; margin:0 2px"><circle cx="7" cy="7" r="6" fill="#ff0000" stroke="white" stroke-width="1"/><path d="M7 4V10M4 7H10" stroke="white" stroke-width="2"/></svg> 5km (High Risk)
+                    </label>
+                    <label style="display:block; margin-bottom:5px; cursor:pointer; color:#e67e22; font-weight:600"><input type="checkbox" checked onchange="toggleLayer('risk-10', this)"> 
+                        <svg width="14" height="14" style="vertical-align:middle; margin:0 2px"><circle cx="7" cy="7" r="6" fill="#ff8c00" stroke="white" stroke-width="1"/><path d="M7 4V10M4 7H10" stroke="white" stroke-width="2"/></svg> 10km (At Risk)
+                    </label>
+                </div>
             `;
+
+            // Prevent map clicks from triggering when clicking the legend
+            L.DomEvent.disableClickPropagation(div);
             return div;
         };
-        legend.addTo(map);
+        combinedControl.addTo(map);
+
+        function toggleLayer(type, checkbox) {
+            const layers = {
+                'flood': floodLayer,
+                'all-hosp': hospitalLayer,
+                'risk-5': risk5kmLayer,
+                'risk-10': risk10kmLayer
+            };
+            
+            const layer = layers[type];
+            if (checkbox.checked) {
+                map.addLayer(layer);
+            } else {
+                map.removeLayer(layer);
+            }
+        }
     </script>
 </body>
 </html>
