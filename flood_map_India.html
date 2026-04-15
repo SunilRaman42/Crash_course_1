@@ -110,7 +110,7 @@
         });
 
         hospitalsAtRiskUP.radius_5km.forEach(h => {
-            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff0000', 48) }) // 24 * 2.0 = 48
+            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff0000', 24) })
             .bindPopup(`
                 <div style="font-family: sans-serif;">
                     <b style="color:#ff0000">⚠️ HIGH RISK HOSPITAL (5km)</b><br>
@@ -122,7 +122,7 @@
         });
 
         hospitalsAtRiskUP.radius_10km.forEach(h => {
-            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff8c00', 36) }) // 24 * 1.5 = 36
+            L.marker([h.lat, h.lng], { icon: createPlusIcon('#ff8c00', 24) })
             .bindPopup(`
                 <div style="font-family: sans-serif;">
                     <b style="color:#ff8c00">⚠️ AT RISK HOSPITAL (10km)</b><br>
@@ -165,10 +165,10 @@
                         <svg width="12" height="12" style="vertical-align:middle; margin:0 2px"><circle cx="6" cy="6" r="5" fill="#007bff" stroke="white" stroke-width="1"/></svg> All Hospitals
                     </label>
                     <label style="display:block; margin-bottom:5px; cursor:pointer; color:#d32f2f; font-weight:600"><input type="checkbox" checked onchange="toggleLayer('risk-5', this)"> 
-                        <svg width="20" height="20" style="vertical-align:middle; margin:0 2px"><circle cx="10" cy="10" r="9" fill="#ff0000" stroke="white" stroke-width="1"/><path d="M10 6V14M6 10H14" stroke="white" stroke-width="2.5"/></svg> 5km (High Risk - 2x)
+                        <svg width="14" height="14" style="vertical-align:middle; margin:0 2px"><circle cx="7" cy="7" r="6" fill="#ff0000" stroke="white" stroke-width="1"/><path d="M7 4V10M4 7H10" stroke="white" stroke-width="2.5"/></svg> 5km (High Risk)
                     </label>
                     <label style="display:block; margin-bottom:5px; cursor:pointer; color:#e67e22; font-weight:600"><input type="checkbox" checked onchange="toggleLayer('risk-10', this)"> 
-                        <svg width="16" height="16" style="vertical-align:middle; margin:0 2px"><circle cx="8" cy="8" r="7" fill="#ff8c00" stroke="white" stroke-width="1"/><path d="M8 5V11M5 8H11" stroke="white" stroke-width="2"/></svg> 10km (At Risk - 1.5x)
+                        <svg width="14" height="14" style="vertical-align:middle; margin:0 2px"><circle cx="7" cy="7" r="6" fill="#ff8c00" stroke="white" stroke-width="1"/><path d="M7 4V10M4 7H10" stroke="white" stroke-width="2"/></svg> 10km (At Risk)
                     </label>
                 </div>
             `;
